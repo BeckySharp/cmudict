@@ -14,6 +14,23 @@ class CmuDict {
     } yield phones
   }
 
+  /**
+   * Convert the arpabet-based pronunciation to IPA
+   * @param w a word
+   * @return a Vector of valid IPA pronunciations for w
+   */
+  def ipaForWord(w: String): Vector[String] = {
+  val lcw = w.toLowerCase
+  for {
+    (word, phones) <- wordsWithPhones
+    if word == lcw
+    ipa = phones
+      .split(" ")
+      .map(arpabetToIPA)
+      .mkString
+  } yield ipa
+  }
+
   def stressForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield stress(phones)
 
@@ -67,8 +84,23 @@ object CmuDict {
     results
   }
 
+  /**
+   * Create a Map from arpabet ngraph -> ipa
+   */
+  val arpaLUT: Map[String, String] = {
+    val stream = getClass.getResourceAsStream("/arpabet_to_ipa")
+    val source = io.Source.fromInputStream(stream, "utf8")
+    val pairs = for {
+      line <- source.getLines()
+      pair = line.split("\t")
+    } yield (pair.head, pair.last)
+    pairs.toMap
+  }
+
   def stress(phones: String): String =
     phones.replaceAll("""[^012]""", "")
+
+  def arpabetToIPA(arpa: String): String = arpaLUT(arpa)
 
   def rhymingChunkForPhones(phones: String): String = {
     val chunks = phones.split(" ")
