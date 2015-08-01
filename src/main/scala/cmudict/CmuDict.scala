@@ -23,22 +23,30 @@ class CmuDict {
   def rhymingChunksForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield rhymingChunkForPhones(phones)
 
-  def wordsByStress(s: String): Vector[String] = for {
-    (word, phones) <- wordsWithPhones
-    if stress(phones) == s
-  } yield word
+  def wordsByStress(s: String): Vector[String] = {
+    val words = for {
+      (word, phones) <- wordsWithPhones
+      if stress(phones) == s
+    } yield word
+    words.distinct
+  }
 
-  def wordsByRhymingChunk(chunk: String): Vector[String] = for {
-    (word, phones) <- wordsWithPhones
-    if phones endsWith chunk
-  } yield word
+  def wordsByRhymingChunk(chunk: String): Vector[String] = {
+    val words = for {
+      (word, phones) <- wordsWithPhones
+      if phones endsWith chunk
+    } yield word
+    words.distinct
+  }
 
-
-  def wordsByRhyme(w: String): Vector[String] = for {
-    chunk <- rhymingChunksForWord(w)
-    word <- wordsByRhymingChunk(chunk)
-    if word != w
-  } yield word
+  def wordsByRhyme(w: String): Vector[String] = {
+    val words = for {
+      chunk <- rhymingChunksForWord(w)
+      word <- wordsByRhymingChunk(chunk)
+      if word != w
+    } yield word
+    words.distinct
+  }
 
 }
 
