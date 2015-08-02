@@ -20,15 +20,15 @@ class CmuDict {
    * @return a Vector of valid IPA pronunciations for w
    */
   def ipaForWord(w: String): Vector[String] = {
-  val lcw = w.toLowerCase
-  for {
-    (word, phones) <- wordsWithPhones
-    if word == lcw
-    ipa = phones
-      .split(" ")
-      .map(arpabetToIPA)
-      .mkString
-  } yield ipa
+    val lcw = w.toLowerCase
+    for {
+      (word, phones) <- wordsWithPhones
+      if word == lcw
+      ipa = phones
+        .split(" ")
+        .map(arpabetToIPA)
+        .mkString
+    } yield ipa
   }
 
   def stressForWord(w: String): Vector[String] =
@@ -102,6 +102,25 @@ object CmuDict {
     } yield (pair.head, pair.last)
     pairs.toMap
   }
+
+  val arpabetVowels =
+    Set("AO", "AO0", "AO1", "AO2",
+        "AA", "AA0", "AA1", "AA2",
+        "IY", "IY0", "IY1", "IY2",
+        "UW", "UW0", "UW1", "UW2",
+        "EH", "EH0", "EH1", "EH2",
+        "IH", "IH0", "IH1", "IH2",
+        "UH", "UH0", "UH1", "UH2",
+        "AH", "AH0", "AH1", "AH2",
+        "AX", "AX0", "AX1", "AX2",
+        "AE", "AE0", "AE1", "AE2",
+        "EY", "EY0", "EY1", "EY2",
+        "AY", "AY0", "AY1", "AY2",
+        "OW", "OW0", "OW1", "OW2",
+        "AW", "AW0", "AW1", "AW2",
+        "OY", "OY0", "OY1", "OY2",
+        "ER", "ER0", "ER1", "ER2",
+        "AXR", "AXR0", "AXR1", "AXR2")
 
   def stress(phones: String): String =
     phones.replaceAll("""[^012]""", "")
