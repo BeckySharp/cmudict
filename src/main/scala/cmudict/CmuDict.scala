@@ -164,7 +164,7 @@ object CmuDict {
     val chunks = phones.split(" ")
     for {
       i <- chunks.indices.reverse
-      if chunks(i).startsWith("1") || chunks(i).startsWith("2")
+      if chunks(i).endsWith("1") || chunks(i).endsWith("2")
     } return chunks.slice(i, chunks.length).mkString(" ")
     phones
   }
