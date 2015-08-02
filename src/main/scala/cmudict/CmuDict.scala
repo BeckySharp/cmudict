@@ -4,9 +4,9 @@ class CmuDict {
 
   import CmuDict._
 
-  val wordsWithPhones: Vector[(String, String)] = readDict()
+  private val wordsWithPhones: Vector[(String, String)] = readDict()
 
-  val arpaLUT: Map[String, String] = readArpaLUT()
+  private val arpaLUT: Map[String, String] = readArpaLUT()
 
   def contains(w: String): Boolean = {
     val lcw = w.toLowerCase
