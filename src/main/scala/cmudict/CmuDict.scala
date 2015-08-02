@@ -71,6 +71,27 @@ class CmuDict {
     words.distinct
   }
 
+  /**
+   * Find words that match a given word w by alliteration
+   * @param w the word used for the alliteration query
+   * @return a Vector of valid alliterations for w
+   */
+  def wordsByAlliteration(w: String): Vector[String] = {
+    val alliterations =
+      for {pro <- phonesForWord(w)
+           onset = pro.split(" ").head
+           // Must be a true a onset (i.e. NOT a vowel)
+           if !(arpabetVowels contains onset)
+      } yield {
+        wordsWithPhones
+          .filter(_._2 startsWith onset)
+          .map(_._1)
+      }
+
+    alliterations
+      .flatten
+      .distinct
+  }
 }
 
 object CmuDict {
