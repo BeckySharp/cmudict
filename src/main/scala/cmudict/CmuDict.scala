@@ -20,23 +20,29 @@ class CmuDict {
    * @return a Vector of valid IPA pronunciations for w
    */
   def ipaForWord(w: String): Vector[String] = {
-  val lcw = w.toLowerCase
-  for {
-    (word, phones) <- wordsWithPhones
-    if word == lcw
-    ipa = phones
-      .split(" ")
-      .map(arpabetToIPA)
-      .mkString
-  } yield ipa
+    val lcw = w.toLowerCase
+    for {
+      (word, phones) <- wordsWithPhones
+      if word == lcw
+      ipa = phones
+        .split(" ")
+        .map(arpabetToIPA)
+        .mkString
+    } yield ipa
   }
 
   def stressForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield stress(phones)
 
-  def syllableCountForWord(w: String): Vector[Int] =
-    for (stress <- stressForWord(w)) yield stress.length
+  def syllableCountForWord(w: String): Vector[Int] = {
+    val syllableCounts =
+      for (stress <- stressForWord(w)) yield stress.length
+    syllableCounts.distinct
+  }
 
+  /**
+   * A word's rhyming chunk spans the last stressed syllable to the end of the word
+   */
   def rhymingChunksForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield rhymingChunkForPhones(phones)
 
@@ -65,6 +71,56 @@ class CmuDict {
     words.distinct
   }
 
+  /**
+   * Find words that match a given word w by alliteration
+   * @param w the word used for the alliteration query
+   * @return a Vector of valid alliterations for w
+   */
+  def wordsByAlliteration(w: String): Vector[String] = {
+    val alliterations =
+      for {pro <- phonesForWord(w)
+           onset = pro.split(" ").head
+           // Must be a true a onset (i.e. NOT a vowel)
+           if !(arpabetVowels contains onset)
+      } yield {
+        wordsWithPhones
+          .filter(_._2 startsWith onset)
+          .map(_._1)
+      }
+
+    alliterations
+      .flatten
+      .distinct
+  }
+
+  /**
+   * Find words that match a given word w by assonance
+   * @param w the word used for the assonance query
+   * @return a Vector of terms with valid assonance for w
+   */
+  def wordsByAssonance(w: String): Vector[String] = {
+    val assonance =
+      for {pro <- phonesForWord(w)
+           // We're only checking for assonance with the first vowel
+           firstVowel =
+           pro.split(" ")
+             .find(p => arpabetVowels contains p)
+             .get
+      } yield {
+        wordsWithPhones
+          .filter{ pair =>
+          val w2fv =
+            pair._2.split(" ")
+              .find(p => arpabetVowels contains p)
+              .get
+          w2fv == firstVowel
+        }.map(_._1)
+      }
+
+    assonance
+      .flatten
+      .distinct
+  }
 }
 
 object CmuDict {
@@ -96,6 +152,25 @@ object CmuDict {
     } yield (pair.head, pair.last)
     pairs.toMap
   }
+
+  val arpabetVowels =
+    Set("AO", "AO0", "AO1", "AO2",
+        "AA", "AA0", "AA1", "AA2",
+        "IY", "IY0", "IY1", "IY2",
+        "UW", "UW0", "UW1", "UW2",
+        "EH", "EH0", "EH1", "EH2",
+        "IH", "IH0", "IH1", "IH2",
+        "UH", "UH0", "UH1", "UH2",
+        "AH", "AH0", "AH1", "AH2",
+        "AX", "AX0", "AX1", "AX2",
+        "AE", "AE0", "AE1", "AE2",
+        "EY", "EY0", "EY1", "EY2",
+        "AY", "AY0", "AY1", "AY2",
+        "OW", "OW0", "OW1", "OW2",
+        "AW", "AW0", "AW1", "AW2",
+        "OY", "OY0", "OY1", "OY2",
+        "ER", "ER0", "ER1", "ER2",
+        "AXR", "AXR0", "AXR1", "AXR2")
 
   def stress(phones: String): String =
     phones.replaceAll("""[^012]""", "")
