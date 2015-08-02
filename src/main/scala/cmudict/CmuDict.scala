@@ -92,6 +92,35 @@ class CmuDict {
       .flatten
       .distinct
   }
+
+  /**
+   * Find words that match a given word w by assonance
+   * @param w the word used for the assonance query
+   * @return a Vector of terms with valid assonance for w
+   */
+  def wordsByAssonance(w: String): Vector[String] = {
+    val assonance =
+      for {pro <- phonesForWord(w)
+           // We're only checking for assonance with the first vowel
+           firstVowel =
+           pro.split(" ")
+             .find(p => arpabetVowels contains p)
+             .get
+      } yield {
+        wordsWithPhones
+          .filter{ pair =>
+          val w2fv =
+            pair._2.split(" ")
+              .find(p => arpabetVowels contains p)
+              .get
+          w2fv == firstVowel
+        }.map(_._1)
+      }
+
+    assonance
+      .flatten
+      .distinct
+  }
 }
 
 object CmuDict {
