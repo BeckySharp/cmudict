@@ -8,6 +8,11 @@ class CmuDict {
 
   val arpaLUT: Map[String, String] = readArpaLUT()
 
+  def contains(w: String): Boolean = {
+    val lcw = w.toLowerCase
+    wordsWithPhones.find(_._1 == lcw).isDefined
+  }
+
   def phonesForWord(w: String): Vector[String] = {
     val lcw = w.toLowerCase
     for {
