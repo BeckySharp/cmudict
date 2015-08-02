@@ -6,6 +6,8 @@ class CmuDict {
 
   val wordsWithPhones: Vector[(String, String)] = readDict()
 
+  val arpaLUT: Map[String, String] = readArpaLUT()
+
   def phonesForWord(w: String): Vector[String] = {
     val lcw = w.toLowerCase
     for {
@@ -30,6 +32,8 @@ class CmuDict {
         .mkString
     } yield ipa
   }
+
+  def arpabetToIPA(arpa: String): String = arpaLUT(arpa)
 
   def stressForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield stress(phones)
@@ -143,7 +147,7 @@ object CmuDict {
   /**
    * Create a Map from arpabet ngraph -> ipa
    */
-  val arpaLUT: Map[String, String] = {
+  def readArpaLUT(): Map[String, String] = {
     val stream = getClass.getResourceAsStream("/arpabet_to_ipa")
     val source = io.Source.fromInputStream(stream, "utf8")
     val pairs = for {
@@ -174,8 +178,6 @@ object CmuDict {
 
   def stress(phones: String): String =
     phones.replaceAll("""[^012]""", "")
-
-  def arpabetToIPA(arpa: String): String = arpaLUT(arpa)
 
   def rhymingChunkForPhones(phones: String): String = {
     val chunks = phones.split(" ")
