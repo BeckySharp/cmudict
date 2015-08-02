@@ -34,9 +34,15 @@ class CmuDict {
   def stressForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield stress(phones)
 
-  def syllableCountForWord(w: String): Vector[Int] =
-    for (stress <- stressForWord(w)) yield stress.length
+  def syllableCountForWord(w: String): Vector[Int] = {
+    val syllableCounts =
+      for (stress <- stressForWord(w)) yield stress.length
+    syllableCounts.distinct
+  }
 
+  /**
+   * A word's rhyming chunk spans the last stressed syllable to the end of the word
+   */
   def rhymingChunksForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield rhymingChunkForPhones(phones)
 
