@@ -151,7 +151,8 @@ class CmuDict {
     val matchingWords = for {
       p <- phones
       (w, p2) <- wordsWithPhones
-      if p == p2} yield w
+      if p == p2
+    } yield w
 
     matchingWords.distinct
   }
@@ -182,7 +183,8 @@ class CmuDict {
     val matchingWords = for {
       p <- phones
       (w, p2) <- wordsWithPhones
-      if p == p2} yield w
+      if p == p2
+    } yield w
 
     matchingWords.distinct
   }
