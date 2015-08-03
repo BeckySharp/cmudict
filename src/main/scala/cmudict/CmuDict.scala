@@ -6,7 +6,20 @@ class CmuDict {
 
   private val wordsWithPhones: Vector[(String, String)] = readDict()
 
+  private val phonesWithConsonants: Vector[(String, String)] =
+    wordsWithPhones.map { case (word, phones) =>
+      val cons = phones.split(" ").filter(arpabetConsonants contains _).mkString(" ")
+      (phones, cons)
+    }.distinct
+
+  private val phonesWithVowels: Vector[(String, String)] =
+    wordsWithPhones.map { case (word, phones) =>
+      val vowels = phones.split(" ").filter(arpabetVowels contains _).mkString(" ")
+      (phones, vowels)
+    }.distinct
+
   private val arpaLUT: Map[String, String] = readArpaLUT()
+
 
   def contains(w: String): Boolean = {
     val lcw = w.toLowerCase
@@ -36,6 +49,24 @@ class CmuDict {
       if word == lcw
     } yield ipaForPhones(phones)
   }
+
+  def vowelsForPhones(phones: String): String = {
+    phones.split(" ")
+      .filter(arpabetVowels contains _)
+      .mkString(" ")
+  }
+
+  def consonantsForPhones(phones: String): String = {
+    phones.split(" ")
+      .filter(arpabetConsonants contains _)
+      .mkString(" ")
+  }
+
+  def vowelsForWord(w: String): Vector[String] =
+    phonesForWord(w).map(vowelsForPhones).distinct
+
+  def consonantsForWord(w: String): Vector[String] =
+    phonesForWord(w).map(consonantsForPhones).distinct
 
   def stressForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield stress(phones)
@@ -161,6 +192,14 @@ object CmuDict {
     "OY", "OY0", "OY1", "OY2",
     "ER", "ER0", "ER1", "ER2",
     "AXR", "AXR0", "AXR1", "AXR2")
+
+  val arpabetConsonants = Set(
+    "P", "B", "T", "D", "K",
+    "G", "CH", "JH", "F", "V",
+    "TH", "DH", "S", "Z", "SH",
+    "ZH", "HH", "M", "EM", "N",
+    "EN", "NG", "ENG", "L", "EL",
+    "R", "DX", "NX", "Y", "W", "Q")
 
   def stress(phones: String): String =
     phones.replaceAll("""[^012]""", "")
