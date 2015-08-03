@@ -6,7 +6,20 @@ class CmuDict {
 
   private val wordsWithPhones: Vector[(String, String)] = readDict()
 
+  private val phonesWithConsonants: Vector[(String, String)] =
+    wordsWithPhones.map { case (word, phones) =>
+      val cons = phones.split(" ").filter(arpabetConsonants contains _).mkString(" ")
+      (phones, cons)
+    }.distinct
+
+  private val phonesWithVowels: Vector[(String, String)] =
+    wordsWithPhones.map { case (word, phones) =>
+      val vowels = phones.split(" ").filter(arpabetVowels contains _).mkString(" ")
+      (phones, vowels)
+    }.distinct
+
   private val arpaLUT: Map[String, String] = readArpaLUT()
+
 
   def contains(w: String): Boolean = {
     val lcw = w.toLowerCase
@@ -36,6 +49,24 @@ class CmuDict {
       if word == lcw
     } yield ipaForPhones(phones)
   }
+
+  def vowelsForPhones(phones: String): String = {
+    phones.split(" ")
+      .filter(arpabetVowels contains _)
+      .mkString(" ")
+  }
+
+  def consonantsForPhones(phones: String): String = {
+    phones.split(" ")
+      .filter(arpabetConsonants contains _)
+      .mkString(" ")
+  }
+
+  def vowelsForWord(w: String): Vector[String] =
+    phonesForWord(w).map(vowelsForPhones).distinct
+
+  def consonantsForWord(w: String): Vector[String] =
+    phonesForWord(w).map(consonantsForPhones).distinct
 
   def stressForWord(w: String): Vector[String] =
     for (phones <- phonesForWord(w)) yield stress(phones)
@@ -93,25 +124,73 @@ class CmuDict {
     alliterations.distinct
   }
 
+
+  def phonesByStrictAssonance(phones: String): Vector[String] = {
+    val v = vowelsForPhones(phones)
+    val matchingPhones = for {
+      (phones, v2) <- phonesWithVowels
+      if v == v2
+    } yield phones
+
+    matchingPhones.distinct
+  }
+
   /**
+   * Strict Assonance: words with all matching vowels (number, order, and identity)
    * Find words that match a given word w by assonance
    * @param w the word used for the assonance query
    * @return a Vector of terms with valid assonance for w
    */
-  def wordsByAssonance(w: String): Vector[String] = {
-    val firstVowels = for {
-      pro <- phonesForWord(w)
-      firstVowel <- pro.split(" ").find(arpabetVowels contains _)
-    } yield firstVowel
-    val assonance = for {
-      fv <- firstVowels
-      (word, phones) <- wordsWithPhones
-      w2fv <- phones.split(" ").find(arpabetVowels contains _)
-      if fv == w2fv
-    } yield word
-    assonance.distinct
+  def wordsByStrictAssonance(w: String): Vector[String] = {
+    // Retrieve phones exhibiting assonance
+    val phones =
+      phonesForWord(w)
+        .flatMap(phonesByStrictAssonance)
+        .distinct
+
+    val matchingWords = for {
+      p <- phones
+      (w, p2) <- wordsWithPhones
+      if p == p2
+    } yield w
+
+    matchingWords.distinct
   }
+
+  def phonesByStrictConsonance(phones: String): Vector[String] = {
+    val c = consonantsForPhones(phones)
+    val matchingPhones = for {
+      (phones, c2) <- phonesWithConsonants
+      if c == c2
+    } yield phones
+
+    matchingPhones.distinct
+  }
+
+  /**
+   * Strict Consonance: words with all matching consonants (number, order, and identity)
+   * Find words that match a given word w by consonance
+   * @param w the word used for the consonance query
+   * @return a Vector of terms with valid consonance for w
+   */
+  def wordsByStrictConsonance(w: String): Vector[String] = {
+    // Retrieve phones exhibiting consonance
+    val phones =
+      phonesForWord(w)
+      .flatMap(phonesByStrictConsonance)
+      .distinct
+
+    val matchingWords = for {
+      p <- phones
+      (w, p2) <- wordsWithPhones
+      if p == p2
+    } yield w
+
+    matchingWords.distinct
+  }
+  
 }
+
 
 object CmuDict {
 
@@ -161,6 +240,14 @@ object CmuDict {
     "OY", "OY0", "OY1", "OY2",
     "ER", "ER0", "ER1", "ER2",
     "AXR", "AXR0", "AXR1", "AXR2")
+
+  val arpabetConsonants = Set(
+    "P", "B", "T", "D", "K",
+    "G", "CH", "JH", "F", "V",
+    "TH", "DH", "S", "Z", "SH",
+    "ZH", "HH", "M", "EM", "N",
+    "EN", "NG", "ENG", "L", "EL",
+    "R", "DX", "NX", "Y", "W", "Q")
 
   def stress(phones: String): String =
     phones.replaceAll("""[^012]""", "")
