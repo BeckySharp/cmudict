@@ -99,6 +99,20 @@ class CmuDict {
   }
 
   /**
+   * Find all homophonous words for w
+   * @param w the word used for the homophone query
+   * @return a Vector of valid homophones for w
+   */
+  def homophonesByWord(w: String): Vector[String] = {
+    val homophones = for {
+      p <- phonesForWord(w)
+      (word, p2) <- wordsWithPhones
+      if p == p2
+    } yield word
+    homophones.distinct
+  }
+
+  /**
    * Find words that match a given word w by alliteration
    * @param w the word used for the alliteration query
    * @return a Vector of valid alliterations for w
