@@ -6,20 +6,17 @@ class CmuDict {
 
   private val wordsWithPhones: Vector[(String, String)] = readDict()
 
-  private val phonesWithConsonants: Vector[(String, String)] =
-    wordsWithPhones.map { case (word, phones) =>
-      val cons = phones.split(" ").filter(arpabetConsonants contains _).mkString(" ")
-      (phones, cons)
+  private val wordsWithConsonants: Vector[(String, String)] =
+    wordsWithPhones.map {
+      case (word, phones) => (word, consonantsForPhones(phones))
     }.distinct
 
-  private val phonesWithVowels: Vector[(String, String)] =
-    wordsWithPhones.map { case (word, phones) =>
-      val vowels = phones.split(" ").filter(arpabetVowels contains _).mkString(" ")
-      (phones, vowels)
+  private val wordsWithVowels: Vector[(String, String)] =
+    wordsWithPhones.map {
+      case (word, phones) => (word, vowelsForPhones(phones))
     }.distinct
 
   private val arpaLUT: Map[String, String] = readArpaLUT()
-
 
   def contains(w: String): Boolean = {
     val lcw = w.toLowerCase
@@ -50,17 +47,11 @@ class CmuDict {
     } yield ipaForPhones(phones)
   }
 
-  def vowelsForPhones(phones: String): String = {
-    phones.split(" ")
-      .filter(arpabetVowels contains _)
-      .mkString(" ")
-  }
+  def vowelsForPhones(phones: String): String =
+    phones.split(" ").filter(arpabetVowels contains _).mkString(" ")
 
-  def consonantsForPhones(phones: String): String = {
-    phones.split(" ")
-      .filter(arpabetConsonants contains _)
-      .mkString(" ")
-  }
+  def consonantsForPhones(phones: String): String =
+    phones.split(" ").filter(arpabetConsonants contains _).mkString(" ")
 
   def vowelsForWord(w: String): Vector[String] =
     phonesForWord(w).map(vowelsForPhones).distinct
@@ -125,14 +116,10 @@ class CmuDict {
   }
 
 
-  def phonesByStrictAssonance(phones: String): Vector[String] = {
+  def wordsByPhonesStrictAssonance(phones: String): Vector[String] = {
     val v = vowelsForPhones(phones)
-    val matchingPhones = for {
-      (phones, v2) <- phonesWithVowels
-      if v == v2
-    } yield phones
-
-    matchingPhones.distinct
+    val words = for ((word, v2) <- wordsWithVowels if v == v2) yield word
+    words.distinct
   }
 
   /**
@@ -142,29 +129,17 @@ class CmuDict {
    * @return a Vector of terms with valid assonance for w
    */
   def wordsByStrictAssonance(w: String): Vector[String] = {
-    // Retrieve phones exhibiting assonance
-    val phones =
-      phonesForWord(w)
-        .flatMap(phonesByStrictAssonance)
-        .distinct
-
-    val matchingWords = for {
-      p <- phones
-      (w, p2) <- wordsWithPhones
-      if p == p2
-    } yield w
-
-    matchingWords.distinct
+    val words = for {
+      phones <- phonesForWord(w)
+      word <- wordsByPhonesStrictAssonance(phones)
+    } yield word
+    words.distinct
   }
 
-  def phonesByStrictConsonance(phones: String): Vector[String] = {
+  def wordsByPhonesStrictConsonance(phones: String): Vector[String] = {
     val c = consonantsForPhones(phones)
-    val matchingPhones = for {
-      (phones, c2) <- phonesWithConsonants
-      if c == c2
-    } yield phones
-
-    matchingPhones.distinct
+    val words = for ((word, c2) <- wordsWithConsonants if c == c2) yield word
+    words.distinct
   }
 
   /**
@@ -174,19 +149,11 @@ class CmuDict {
    * @return a Vector of terms with valid consonance for w
    */
   def wordsByStrictConsonance(w: String): Vector[String] = {
-    // Retrieve phones exhibiting consonance
-    val phones =
-      phonesForWord(w)
-      .flatMap(phonesByStrictConsonance)
-      .distinct
-
-    val matchingWords = for {
-      p <- phones
-      (w, p2) <- wordsWithPhones
-      if p == p2
-    } yield w
-
-    matchingWords.distinct
+    val words = for {
+      phones <- phonesForWord(w)
+      word <- wordsByPhonesStrictConsonance(phones)
+    } yield word
+    words.distinct
   }
   
 }
