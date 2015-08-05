@@ -1,5 +1,8 @@
 package cmudict
 
+import com.sun.xml.internal.ws.util.StringUtils
+import scala.collection.mutable.ArrayBuffer
+
 class CmuDict {
 
   import CmuDict._
@@ -156,6 +159,29 @@ class CmuDict {
     words.distinct
   }
 
+
+
+    // TODO: look by cluster
+  def wordsByPhonesWeakConsonance(phones: String, ratio:Double): Vector[(String, Array[String], Double)] = {
+    val c = consonantsForPhones(phones).split(" ")
+
+    val words = for {
+      (word, c2) <- wordsWithConsonants
+      c2Phone = c2.split(" ")
+      if (c2Phone.size > 0)
+      intersection = c2.split(" ").intersect(c)
+      cCoverage = intersection.size.toDouble / c.size.toDouble
+      c2Coverage = intersection.size.toDouble / c2Phone.size.toDouble
+      avg = (cCoverage + c2Coverage) / 2.0
+
+      if (avg >= ratio)
+
+    } yield (word, intersection, avg)
+
+
+    words.distinct.sortBy(- _._3)
+  }
+
   /**
    * Strict Consonance: words with all matching consonants (number, order, and identity)
    * Find words that match a given word w by consonance
@@ -167,6 +193,26 @@ class CmuDict {
       phones <- phonesForWord(w)
       word <- wordsByPhonesStrictConsonance(phones)
     } yield word
+    words.distinct
+  }
+
+  /**
+   * Weak Consonance: words which match any of the consonants in the given word.
+   * Find all the words, f,  which match any of the consonants in a given word w, in any order
+   * Once found, the average of the ratio of w which is matched and of f which is matched is calculated.
+   * If that average is above the threshold, f is returned along with the overlapping consonants and the average.
+   * @param w the word used for the consonance query
+   * @param ratio the average matching ratio threshold
+   * @return a Vector of (word, overlapping consonants, the average-overlap-ratio)
+   */
+  def wordsByWeakConsonance(w:String, ratio:Double): Vector[(String, Array[String], Double)] = {
+
+    assert (ratio >= 0.25)
+
+    val words = for {
+      phones <- phonesForWord(w)
+      (word, int, ratioMatched) <- wordsByPhonesWeakConsonance(phones, ratio)
+    } yield (word, int, ratioMatched)
     words.distinct
   }
   
@@ -240,6 +286,30 @@ object CmuDict {
       if chunks(i).endsWith("1") || chunks(i).endsWith("2")
     } return chunks.slice(i, chunks.length).mkString(" ")
     phones
+  }
+
+  def main (args:Array[String]) {
+    val d = new CmuDict
+
+    val w1 = "pest"
+    println ("w1: " + w1)
+
+    val p1 = d.phonesForWord(w1)
+    println ("p1: " + p1.mkString(", "))
+
+    val sc1 = d.wordsByStrictConsonance(w1)
+    println ("\nstrict consonance matches for " + w1 + ": " + sc1.mkString(", "))
+
+    val wc1 = d.wordsByWeakConsonance(w1, 0.7)
+    println ("\nweak consonance matches for " + w1 + ": ")
+    for (w <- wc1) {
+     println("(" + w._1 + ", " + w._2.mkString("(",", ", ") ") + w._3 + ")")
+    }
+
+
+
+
+
   }
 
 }
